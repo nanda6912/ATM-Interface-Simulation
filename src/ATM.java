@@ -25,7 +25,19 @@ public class ATM {
                         case 2:
                             System.out.print("Enter amount to deposit: Rs.");
                             double depositAmount = sc.nextDouble();
-                            userAccount.deposit(depositAmount);
+                            System.out.print("Enter the count of 100's notes:");
+			    double Hu= sc.nextDouble();
+			    System.out.print("Enter the count of 200's notes:");
+			    double Tw= sc.nextDouble();
+                            System.out.print("Enter the count of 500's notes:");
+		            double Fi= sc.nextDouble();
+			    double checkAmount=Hu*100+Tw*200+500*Fi;
+			     if(checkAmount==depositAmount){
+			     userAccount.deposit(depositAmount);
+			      }
+			     else{
+				System.out.println("Amount is matched- Please Verify ");
+			      }
                             break;
                         case 3:
                             System.out.print("Enter amount to withdraw: Rs.");
