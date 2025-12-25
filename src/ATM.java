@@ -36,7 +36,7 @@ public class ATM {
 			     userAccount.deposit(depositAmount);
 			      }
 			     else{
-				System.out.println("Amount is matched- Please Verify ");
+				System.out.println("Amount is mis-matched- Please Verify ");
 			      }
                             break;
                         case 3:
