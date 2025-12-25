@@ -1,5 +1,4 @@
-import java.util.ArrayList;
-
+import java.util.*;
 class BankAccount {
     private String accountHolder;
     private double balance;
@@ -18,16 +17,22 @@ class BankAccount {
 
     public void deposit(double amount) {
         if (amount > 0) {
-            balance += amount;
-            transactions.add("Deposited: Rs." + amount);
-            System.out.println("Deposit successful! New balance: Rs." + balance);
+		if(amount%100==0){
+			 balance += amount;
+                         transactions.add("Deposited: Rs." + amount);  
+			System.out.println("Deposit successful! New balance: Rs." + balance);        
+                         }
+		else{
+			System.out.println("Amount should be multiple of 100's");
+			}
+	 
         } else {
             System.out.println("Invalid amount!");
         }
     }
 
     public void withdraw(double amount) {
-        if (amount > 0 && amount <= balance) {
+        if (amount > 0 && amount <= balance && amount%100==0) {
             balance -= amount;
             transactions.add("Withdrew: Rs." + amount);
             System.out.println("Withdrawal successful! Remaining balance: Rs." + balance);
@@ -41,6 +46,8 @@ class BankAccount {
         for (String t : transactions) {
             System.out.println("- " + t);
         }
+         double b= getBalance();
+	System.out.println("Final amount is :" +b);
     }
 }
 
