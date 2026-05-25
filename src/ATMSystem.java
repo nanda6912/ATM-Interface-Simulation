@@ -1,15 +1,19 @@
-import java.io.*;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * ATMSystem - Backend system for managing users and persistence
+ * ATMSystem - Backend system for managing users and data persistence
  */
 public class ATMSystem {
     private Map<String, User> users;
     private User currentUser;
     private EnhancedBankAccount currentAccount;
     private static final String DATA_FILE = "atm_data.dat";
+    private boolean isLoggedIn = false;
     
     public ATMSystem() {
         this.users = new HashMap<>();
@@ -20,7 +24,7 @@ public class ATMSystem {
     }
     
     /**
-     * Register a new user
+     * Register new user
      */
     public boolean registerUser(String cardNumber, String pin, String userName) {
         if (users.containsKey(cardNumber)) {
@@ -29,23 +33,17 @@ public class ATMSystem {
         
         User newUser = new User(cardNumber, pin, userName);
         
-        // Create default Checking account
-        EnhancedBankAccount checkingAccount = new EnhancedBankAccount(
-            cardNumber + "-CHK", 
-            userName, 
-            "Checking", 
-            10000.0
-        );
-        newUser.addAccount(checkingAccount);
-        
-        // Create Savings account
+        // Add default Savings account
         EnhancedBankAccount savingsAccount = new EnhancedBankAccount(
-            cardNumber + "-SAV", 
-            userName, 
-            "Savings", 
-            5000.0
+            cardNumber + "_SAV", userName, "Savings", 10000.0
         );
         newUser.addAccount(savingsAccount);
+        
+        // Add default Checking account
+        EnhancedBankAccount checkingAccount = new EnhancedBankAccount(
+            cardNumber + "_CHK", userName, "Checking", 5000.0
+        );
+        newUser.addAccount(checkingAccount);
         
         users.put(cardNumber, newUser);
         saveData();
@@ -57,19 +55,20 @@ public class ATMSystem {
      */
     public boolean loginUser(String cardNumber, String pin) {
         if (!users.containsKey(cardNumber)) {
-            System.out.println("✗ Card not found!");
+            System.out.println("✗ Card number not found!");
             return false;
         }
         
         User user = users.get(cardNumber);
         
         if (user.isCardLocked()) {
-            System.out.println("✗ Your card has been locked! Please contact customer service.");
+            System.out.println("✗ Your card is locked! Please contact support.");
             return false;
         }
         
         if (user.validatePin(pin)) {
             this.currentUser = user;
+            this.isLoggedIn = true;
             System.out.println("\n✓ Login successful! Welcome, " + user.getUserName());
             return true;
         } else {
@@ -83,26 +82,13 @@ public class ATMSystem {
      * Logout current user
      */
     public void logoutUser() {
-        if (currentUser != null) {
-            System.out.println("\n✓ Logged out successfully. Thank you for using ATM!");
-            currentUser = null;
-            currentAccount = null;
+        if (isLoggedIn) {
+            System.out.println("\n✓ Logged out successfully!");
+            this.currentUser = null;
+            this.currentAccount = null;
+            this.isLoggedIn = false;
             saveData();
         }
-    }
-    
-    /**
-     * Check if user is logged in
-     */
-    public boolean isLoggedIn() {
-        return currentUser != null;
-    }
-    
-    /**
-     * Get current logged-in user
-     */
-    public User getCurrentUser() {
-        return currentUser;
     }
     
     /**
@@ -113,10 +99,67 @@ public class ATMSystem {
     }
     
     /**
+     * Get current user
+     */
+    public User getCurrentUser() {
+        return currentUser;
+    }
+    
+    /**
      * Get current account
      */
     public EnhancedBankAccount getCurrentAccount() {
         return currentAccount;
+    }
+    
+    /**
+     * Check if user is logged in
+     */
+    public boolean isLoggedIn() {
+        return isLoggedIn;
+    }
+    
+    /**
+     * Initialize sample data
+     */
+    private void initializeSampleData() {
+        if (users.isEmpty()) {
+            // Create sample users
+            User user1 = new User("4532123456789012", "1234", "Gajala");
+            EnhancedBankAccount account1_1 = new EnhancedBankAccount(
+                "4532123456789012_SAV", "Gajala", "Savings", 50000.0
+            );
+            EnhancedBankAccount account1_2 = new EnhancedBankAccount(
+                "4532123456789012_CHK", "Gajala", "Checking", 25000.0
+            );
+            user1.addAccount(account1_1);
+            user1.addAccount(account1_2);
+            users.put("4532123456789012", user1);
+            
+            User user2 = new User("5412987654321098", "5678", "Pratik");
+            EnhancedBankAccount account2_1 = new EnhancedBankAccount(
+                "5412987654321098_SAV", "Pratik", "Savings", 75000.0
+            );
+            EnhancedBankAccount account2_2 = new EnhancedBankAccount(
+                "5412987654321098_CHK", "Pratik", "Checking", 30000.0
+            );
+            user2.addAccount(account2_1);
+            user2.addAccount(account2_2);
+            users.put("5412987654321098", user2);
+            
+            User user3 = new User("6011111111111117", "9999", "Arjun");
+            EnhancedBankAccount account3_1 = new EnhancedBankAccount(
+                "6011111111111117_SAV", "Arjun", "Savings", 60000.0
+            );
+            EnhancedBankAccount account3_2 = new EnhancedBankAccount(
+                "6011111111111117_CHK", "Arjun", "Checking", 35000.0
+            );
+            user3.addAccount(account3_1);
+            user3.addAccount(account3_2);
+            users.put("6011111111111117", user3);
+            
+            saveData();
+        }
     }
     
     /**
@@ -125,7 +168,7 @@ public class ATMSystem {
     public void saveData() {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(DATA_FILE))) {
             oos.writeObject(users);
-        } catch (IOException e) {
+        } catch (Exception e) {
             System.err.println("Error saving data: " + e.getMessage());
         }
     }
@@ -134,49 +177,11 @@ public class ATMSystem {
      * Load data from file
      */
     @SuppressWarnings("unchecked")
-    public void loadData() {
-        File file = new File(DATA_FILE);
-        if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
-                users = (Map<String, User>) ois.readObject();
-            } catch (IOException | ClassNotFoundException e) {
-                System.err.println("Error loading data: " + e.getMessage());
-                users = new HashMap<>();
-            }
-        }
-    }
-    
-    /**
-     * Initialize sample data for testing
-     */
-    private void initializeSampleData() {
-        if (users.isEmpty()) {
-            // User 1
-            User user1 = new User("4532123456789012", "1234", "Gajala");
-            EnhancedBankAccount acc1 = new EnhancedBankAccount("4532123456789012-CHK", "Gajala", "Checking", 50000);
-            EnhancedBankAccount acc2 = new EnhancedBankAccount("4532123456789012-SAV", "Gajala", "Savings", 25000);
-            user1.addAccount(acc1);
-            user1.addAccount(acc2);
-            users.put("4532123456789012", user1);
-            
-            // User 2
-            User user2 = new User("5412987654321098", "5678", "Pratik");
-            EnhancedBankAccount acc3 = new EnhancedBankAccount("5412987654321098-CHK", "Pratik", "Checking", 75000);
-            EnhancedBankAccount acc4 = new EnhancedBankAccount("5412987654321098-SAV", "Pratik", "Savings", 40000);
-            user2.addAccount(acc3);
-            user2.addAccount(acc4);
-            users.put("5412987654321098", user2);
-            
-            // User 3
-            User user3 = new User("6011111111111117", "9999", "Arjun");
-            EnhancedBankAccount acc5 = new EnhancedBankAccount("6011111111111117-CHK", "Arjun", "Checking", 100000);
-            EnhancedBankAccount acc6 = new EnhancedBankAccount("6011111111111117-SAV", "Arjun", "Savings", 60000);
-            user3.addAccount(acc5);
-            user3.addAccount(acc6);
-            users.put("6011111111111117", user3);
-            
-            saveData();
-            System.out.println("✓ Sample data initialized");
+    private void loadData() {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(DATA_FILE))) {
+            users = (Map<String, User>) ois.readObject();
+        } catch (Exception e) {
+            users = new HashMap<>();
         }
     }
 }
